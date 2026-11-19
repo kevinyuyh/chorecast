@@ -1,0 +1,1053 @@
+<title>Chorecast</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a phone-first ledger column under a sticky balance bar and tabs; on wide screens it simply gets more breathing room. */
+:root {
+  --bg: #EDF0F6;
+  --surface: #FFFFFF;
+  --sunk: #E2E7F0;
+  --ink: #131A2B;
+  --muted: #586278;
+  --line: #D5DBE7;
+  --accent: #2C44D2;
+  --accent-soft: #E1E6FC;
+  --on-accent: #FFFFFF;
+  --yes: #0C7A65;
+  --yes-soft: #D3EFE7;
+  --no: #C2392F;
+  --no-soft: #FBE1DE;
+  --chip: #EAAA2B;
+  --chip-edge: #A9740C;
+  --chip-soft: #FBEFD3;
+  --font-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1320; --surface: #171E2F; --sunk: #1F2840; --ink: #E8ECF5; --muted: #98A2B9; --line: #2A3450;
+    --accent: #8396FF; --accent-soft: #232D55; --on-accent: #0E1320;
+    --yes: #43C9A6; --yes-soft: #123A33; --no: #FF7D70; --no-soft: #43201E;
+    --chip: #F2C056; --chip-edge: #B98A22; --chip-soft: #3A3020;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1320; --surface: #171E2F; --sunk: #1F2840; --ink: #E8ECF5; --muted: #98A2B9; --line: #2A3450;
+  --accent: #8396FF; --accent-soft: #232D55; --on-accent: #0E1320;
+  --yes: #43C9A6; --yes-soft: #123A33; --no: #FF7D70; --no-soft: #43201E;
+  --chip: #F2C056; --chip-edge: #B98A22; --chip-soft: #3A3020;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--surface);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- header ---------- */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.wrap {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px 8px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand h1 {
+  margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -0.02em;
+}
+.brand small { color: var(--muted); font-size: 12px; display: block; line-height: 1.2; }
+.wallet { display: flex; align-items: center; gap: 10px; text-align: right; }
+.wallet-num { font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: -0.02em; }
+.wallet-sub { font-size: 12px; color: var(--muted); line-height: 1.3; }
+
+.chip {
+  display: inline-block; flex: none; width: 1em; height: 1em; border-radius: 50%;
+  background: var(--chip);
+  box-shadow: inset 0 0 0 0.12em var(--chip), inset 0 0 0 0.2em var(--chip-edge);
+  background-image: repeating-conic-gradient(var(--chip-edge) 0 10deg, transparent 10deg 45deg);
+  -webkit-mask: radial-gradient(circle, #000 0 0.36em, transparent 0.37em 0.4em, #000 0.41em);
+          mask: radial-gradient(circle, #000 0 0.36em, transparent 0.37em 0.4em, #000 0.41em);
+  vertical-align: -0.12em;
+}
+.chip.big { width: 30px; height: 30px; font-size: 30px; }
+
+.tabs { display: flex; gap: 4px; padding-block: 0 0; overflow-x: auto; scrollbar-width: none; }
+.tab {
+  appearance: none; border: 0; background: none; padding: 10px 12px 11px; font-weight: 600; color: var(--muted);
+  border-bottom: 3px solid transparent; white-space: nowrap; display: flex; gap: 6px; align-items: center;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.count { background: var(--sunk); color: var(--ink); border-radius: 999px; font-size: 11px; padding: 1px 7px; font-weight: 700; }
+.count.hot { background: var(--accent); color: var(--on-accent); }
+
+.demo {
+  background: var(--chip-soft); border-bottom: 1px solid var(--line); font-size: 13px;
+}
+.demo .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-block: 8px; }
+.demo strong { font-weight: 700; }
+.demo select { padding: 4px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); }
+
+main.wrap { padding-block: 18px 96px; display: grid; gap: 22px; }
+.view { display: grid; gap: 22px; }
+
+/* ---------- generic ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; }
+.section-title {
+  margin: 0; font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.stack { display: grid; gap: 12px; }
+.note { color: var(--muted); font-size: 13px; margin: 0; }
+.btn {
+  appearance: none; border: 1px solid var(--line); background: var(--surface); border-radius: 10px;
+  padding: 9px 14px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 40px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.yes { background: var(--yes-soft); border-color: var(--yes); color: var(--yes); }
+.btn.no { background: var(--no-soft); border-color: var(--no); color: var(--no); }
+.btn.yes[aria-pressed="true"] { background: var(--yes); color: var(--surface); }
+.btn.no[aria-pressed="true"] { background: var(--no); color: var(--surface); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.small { min-height: 32px; padding: 5px 10px; font-size: 13px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.who { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; white-space: nowrap; }
+.who .you { font-weight: 500; color: var(--muted); font-size: 0.9em; }
+
+/* ---------- filters ---------- */
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.filter {
+  appearance: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px;
+  font-size: 13px; font-weight: 600; color: var(--muted);
+}
+.filter[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+/* ---------- bet card ---------- */
+.bets { display: grid; gap: 12px; }
+.bet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.bet.mine-to-judge { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.bet-head {
+  appearance: none; border: 0; background: none; width: 100%; text-align: left; padding: 16px 18px 14px;
+  display: grid; gap: 8px; border-radius: 0;
+}
+.bet-head:focus-visible { outline-offset: -3px; }
+.bet-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13px; color: var(--muted); }
+.tag {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px;
+  border-radius: 6px; background: var(--sunk); color: var(--ink);
+}
+.tag.promise { background: var(--accent-soft); color: var(--accent); }
+.tag.goal { background: var(--yes-soft); color: var(--yes); }
+.tag.plan { background: var(--sunk); color: var(--muted); }
+.tag.fun { background: var(--chip-soft); color: var(--chip-edge); }
+:root[data-theme="dark"] .tag.fun { color: var(--chip); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.fun { color: var(--chip); } }
+.pill-alert { font-size: 12px; font-weight: 700; color: var(--on-accent); background: var(--accent); padding: 2px 8px; border-radius: 999px; }
+.q {
+  margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 1.22;
+  letter-spacing: -0.01em; text-wrap: balance;
+}
+.people-line { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.people-line .who { color: var(--ink); }
+
+.conf { display: grid; gap: 6px; }
+.conf-bar { display: flex; height: 10px; border-radius: 999px; overflow: hidden; background: var(--sunk); }
+.conf-bar .y { background: var(--yes); }
+.conf-bar .n { background: var(--no); }
+.conf-label { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; flex-wrap: wrap; }
+.conf-label strong { font-weight: 700; }
+.c-yes { color: var(--yes); }
+.c-no { color: var(--no); }
+
+.result {
+  font-size: 13px; padding: 8px 12px; border-radius: 10px; background: var(--sunk);
+  display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center;
+}
+.result .verdict { font-weight: 800; font-family: var(--font-display); font-size: 15px; }
+
+.bet-body { border-top: 1px dashed var(--line); padding: 14px 18px 18px; display: grid; gap: 14px; background: color-mix(in srgb, var(--sunk) 35%, var(--surface)); }
+.done-means { margin: 0; font-size: 14px; }
+.done-means b { font-weight: 700; }
+.stakes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.stakes li { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; align-items: center; }
+.side-pill { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 6px; letter-spacing: 0.04em; }
+.side-pill.yes { background: var(--yes-soft); color: var(--yes); }
+.side-pill.no { background: var(--no-soft); color: var(--no); }
+
+.panel { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 14px; display: grid; gap: 12px; }
+.panel h4 { margin: 0; font-size: 14px; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stepper button { appearance: none; border: 0; background: var(--sunk); width: 40px; height: 40px; font-size: 18px; font-weight: 700; }
+.stepper output { min-width: 64px; text-align: center; font-weight: 700; font-size: 16px; display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
+.preview { font-size: 13px; color: var(--muted); }
+
+/* ---------- forms ---------- */
+.field { display: grid; gap: 6px; }
+.field label, .field .lbl { font-weight: 600; font-size: 14px; }
+.field .hint { font-size: 12px; color: var(--muted); }
+input[type="text"], input[type="datetime-local"], select, textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px;
+}
+textarea { resize: vertical; min-height: 64px; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.seg label {
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; cursor: pointer;
+  display: grid; gap: 2px; font-weight: 700; font-size: 14px; background: var(--surface);
+}
+.seg label small { font-weight: 500; font-size: 11px; color: var(--muted); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg input:checked + label { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.seg input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 420px) { .seg { grid-template-columns: repeat(2, 1fr); } }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .two { grid-template-columns: 1fr; } }
+.err { color: var(--no); font-size: 13px; font-weight: 600; margin: 0; }
+.emoji-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.emoji-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.emoji-pick label { width: 42px; height: 42px; display: grid; place-items: center; font-size: 22px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--surface); }
+.emoji-pick input:checked + label { border-color: var(--accent); background: var(--accent-soft); }
+.emoji-pick input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- family ---------- */
+.board { list-style: none; margin: 0; padding: 0; display: grid; }
+.board li { display: grid; grid-template-columns: 28px 1fr auto; gap: 4px 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.board li:first-child { border-top: 0; padding-top: 0; }
+.rank { font-family: var(--font-display); font-weight: 800; color: var(--muted); font-size: 16px; }
+.board .name { font-weight: 700; display: flex; gap: 6px; align-items: center; min-width: 0; }
+.board .sub { grid-column: 2 / 3; font-size: 12px; color: var(--muted); }
+.board .bal { grid-row: 1 / 3; grid-column: 3; text-align: right; }
+.board .bal b { font-family: var(--font-display); font-size: 22px; font-weight: 800; display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+.board .bal span { font-size: 12px; font-weight: 600; }
+.owe { color: var(--no); }
+.earn { color: var(--yes); }
+.handoffs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.handoffs li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--sunk); }
+.rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
+.rules b { font-weight: 700; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+
+.empty { text-align: center; padding: 28px 18px; display: grid; gap: 10px; justify-items: center; }
+.empty h3 { margin: 0; font-family: var(--font-display); font-size: 20px; }
+.how { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 12px; font-weight: 600; font-size: 14px;
+  max-width: calc(100% - 32px); box-shadow: 0 6px 24px rgba(0,0,0,.2);
+}
+.status { padding: 12px 14px; border-radius: 12px; background: var(--chip-soft); font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) {
+  .bet-body { animation: drop .18s ease-out; }
+  @keyframes drop { from { opacity: .4; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+}
+</style>
+
+<div class="top">
+  <div class="wrap">
+    <div class="top-row">
+      <div class="brand">
+        <span class="chip big" aria-hidden="true"></span>
+        <div>
+          <h1>Chorecast</h1>
+          <small>Bet chores on family promises</small>
+        </div>
+      </div>
+      <div class="wallet" id="wallet" aria-live="polite"></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-bets" data-tab="bets" aria-selected="true">Bets <span class="count" id="count-open">0</span></button>
+      <button class="tab" role="tab" id="tab-new" data-tab="new" aria-selected="false">New bet</button>
+      <button class="tab" role="tab" id="tab-family" data-tab="family" aria-selected="false">Family</button>
+    </nav>
+  </div>
+</div>
+<div class="demo" id="demo-bar" hidden>
+  <div class="wrap">
+    <span><strong>Demo family.</strong> Nothing here is saved.</span>
+    <label for="demo-as">Viewing as</label>
+    <select id="demo-as"></select>
+  </div>
+</div>
+
+<main class="wrap">
+  <div id="status" class="status" role="status">Opening the family ledger…</div>
+
+  <!-- JOIN (static so typing survives live updates) -->
+  <section class="card stack" id="join" hidden aria-labelledby="join-title">
+    <div>
+      <h2 id="join-title" style="margin:0;font-family:var(--font-display);font-size:22px">Join the family board</h2>
+      <p class="note" id="join-sub">Pick the name your family knows you by. Up to 10 people can join.</p>
+    </div>
+    <form id="join-form" class="stack" novalidate>
+      <div class="field">
+        <label for="join-name">Your name on the board</label>
+        <input type="text" id="join-name" maxlength="20" placeholder="Mum, Dad, Lily, Grandma…" autocomplete="nickname">
+      </div>
+      <div class="field">
+        <span class="lbl" id="emoji-lbl">Your token</span>
+        <div class="emoji-pick" id="emoji-pick" role="radiogroup" aria-labelledby="emoji-lbl"></div>
+      </div>
+      <p class="err" id="join-err" hidden></p>
+      <div class="row"><button class="btn primary" type="submit" id="join-btn">Join with 100 chips</button></div>
+    </form>
+    <div class="stack" style="gap:6px">
+      <h3 class="section-title">How it works</h3>
+      <ol class="how">
+        <li>Someone posts a bet: a promise, a goal, a plan or just for fun. A judge is named up front.</li>
+        <li>Everyone except the judge stakes 5–30 chips on YES or NO. The odds show what the family really expects.</li>
+        <li>The judge settles it. Losers' chips go to the winners, and 10 chips buys one chore from someone who's behind.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- BETS -->
+  <section class="view" id="view-bets" aria-labelledby="tab-bets">
+    <div class="filters" id="filters" role="group" aria-label="Filter bets"></div>
+    <div id="feed" class="stack" style="gap:22px"></div>
+  </section>
+
+  <!-- NEW BET (static form) -->
+  <section class="view" id="view-new" hidden aria-labelledby="tab-new">
+    <form id="new-form" class="card stack" novalidate>
+      <div class="field">
+        <span class="lbl" id="type-lbl">What kind of bet?</span>
+        <div class="seg" role="radiogroup" aria-labelledby="type-lbl">
+          <input type="radio" name="nb-type" id="nb-type-promise" value="promise" checked><label for="nb-type-promise">Promise<small>"I'll do it"</small></label>
+          <input type="radio" name="nb-type" id="nb-type-goal" value="goal"><label for="nb-type-goal">Goal<small>a personal target</small></label>
+          <input type="radio" name="nb-type" id="nb-type-plan" value="plan"><label for="nb-type-plan">Plan<small>will it happen?</small></label>
+          <input type="radio" name="nb-type" id="nb-type-fun" value="fun"><label for="nb-type-fun">Fun<small>just for laughs</small></label>
+        </div>
+        <span class="hint" id="type-hint"></span>
+      </div>
+      <div class="field">
+        <label for="nb-q">The prediction</label>
+        <input type="text" id="nb-q" maxlength="140">
+        <span class="hint">Write it so the answer is clearly YES or NO, with a deadline in the sentence.</span>
+      </div>
+      <div class="two">
+        <div class="field">
+          <label for="nb-subject">Who is it about?</label>
+          <select id="nb-subject"></select>
+        </div>
+        <div class="field">
+          <label for="nb-judge">Judge</label>
+          <select id="nb-judge"></select>
+          <span class="hint">The judge can't bet on it and is the only one who can settle it.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="nb-done">What counts as YES?</label>
+        <textarea id="nb-done" maxlength="200"></textarea>
+        <span class="hint">Something the judge can check. "Gate latches by itself", not "sorts the gate out".</span>
+      </div>
+      <div class="field">
+        <label for="nb-close">Betting closes</label>
+        <input type="datetime-local" id="nb-close">
+        <span class="hint">Usually the deadline itself. The judge can settle any time after people have bet.</span>
+      </div>
+      <p class="err" id="nb-err" hidden></p>
+      <div class="row"><button class="btn primary" type="submit">Post bet</button></div>
+    </form>
+  </section>
+
+  <!-- FAMILY -->
+  <section class="view" id="view-family" hidden aria-labelledby="tab-family">
+    <div id="family"></div>
+    <section class="card stack" aria-labelledby="rules-title">
+      <h3 class="section-title" id="rules-title">House rules</h3>
+      <ol class="rules">
+        <li><b>The judge is named when a bet is posted.</b> The judge can't stake on it, and only the judge can settle or void it.</li>
+        <li><b>You can only back yourself.</b> On a promise or goal, the person it's about can bet YES but never NO.</li>
+        <li><b>Stakes are 5–30 chips and locked once placed.</b> You can't stake more than you have available.</li>
+        <li><b>Payouts:</b> losers' chips are split among the winners by stake. The judge keeps 5% for their trouble. If nobody took the other side, everyone gets their chips back.</li>
+        <li><b>1 chore = 10 chips</b>, about 15 minutes of an agreed job. When someone does a chore they owe you, you tick it off, and 10 chips move back to them.</li>
+      </ol>
+    </section>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  const START = 100, CHORE = 10, MIN_STAKE = 5, MAX_STAKE = 30, FEE_RATE = 0.05, MAX_MEMBERS = 10;
+  const TYPES = {
+    promise: { label: "Promise", self: true, q: "Dad fixes the side gate by Sunday 6pm", done: "The gate closes and latches on its own", hint: "The person it's about can only bet YES on themselves." },
+    goal:    { label: "Goal",    self: true, q: "Lily studies 5 hours for chemistry this week", done: "Her study log shows 5 hours by Sunday 8pm", hint: "Back your own goal with chips. The family bets whether you'll make it." },
+    plan:    { label: "Plan",    self: false, q: "We leave for the airport by 9:00 on Saturday", done: "The car is out of the driveway by 9:00", hint: "Use the odds as a forecast. If nobody believes it, plan for the late version." },
+    fun:     { label: "Fun",     self: false, q: "The family photo takes fewer than 5 tries", done: "The judge counts the shutter clicks", hint: "Keep it about things people do, not how they look or feel." },
+  };
+  const EMOJIS = ["🦊","🐻","🐼","🦉","🐸","🐙","🦁","🐨","🐯","🐧","🦄","🐢","🐝","🐳"];
+  const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+  const $ = (id) => document.getElementById(id);
+
+  const state = { mode: "loading", meId: null, people: {}, tab: "bets", filter: "all", open: null, drafts: {}, confirm: null, demoAs: "d-dad", busy: false };
+  let store = null, M = null;
+
+  // ---------- tiny DOM helper ----------
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "value" || k === "disabled" || k === "checked") el[k] = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid == null || kid === false) continue;
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+  const chipIcon = () => h("span", { class: "chip", "aria-hidden": "true" });
+
+  // ---------- the ledger math (pure) ----------
+  function compute(people, now) {
+    const members = Object.entries(people)
+      .filter(([, d]) => isObj(d) && typeof d.name === "string" && d.name.trim())
+      .map(([id, d]) => ({ id, name: d.name.trim().slice(0, 20), emoji: typeof d.emoji === "string" && d.emoji ? d.emoji.slice(0, 8) : "🙂", joinedAt: String(d.joinedAt || "") }))
+      .sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.id.localeCompare(b.id))
+      .slice(0, MAX_MEMBERS);
+    const byId = Object.fromEntries(members.map((m) => [m.id, m]));
+    const delta = Object.fromEntries(members.map((m) => [m.id, 0]));
+    const inPlay = Object.fromEntries(members.map((m) => [m.id, 0]));
+    const add = (o, k, v) => { if (k in o) o[k] += v; };
+    const bets = [];
+
+    for (const m of members) {
+      const bm = isObj(people[m.id].bets) ? people[m.id].bets : {};
+      for (const [bid, b] of Object.entries(bm)) {
+        if (!isObj(b) || typeof b.question !== "string" || !TYPES[b.type] || !byId[b.judgeId]) continue;
+        const closesAt = Date.parse(b.closesAt);
+        if (!isFinite(closesAt)) continue;
+        const subjectId = byId[b.subjectId] ? b.subjectId : null;
+        if (TYPES[b.type].self && !subjectId) continue;
+        if (subjectId && subjectId === b.judgeId) continue;
+
+        // Only a verdict in the JUDGE's own ledger counts.
+        const vRaw = people[b.judgeId] && isObj(people[b.judgeId].verdicts) ? people[b.judgeId].verdicts[bid] : null;
+        let verdict = null;
+        if (isObj(vRaw) && ["yes", "no", "void"].includes(vRaw.outcome)) {
+          const at = Date.parse(vRaw.at);
+          verdict = { outcome: vRaw.outcome, at: isFinite(at) ? at : now };
+        }
+        const cutoff = Math.min(closesAt, verdict ? verdict.at : Infinity);
+
+        const stakes = [];
+        for (const s of members) {
+          const st = isObj(people[s.id].stakes) ? people[s.id].stakes[bid] : null;
+          if (!isObj(st)) continue;
+          if (s.id === b.judgeId) continue;                                   // judge can't stake
+          const chips = Math.round(Number(st.chips));
+          if (!(chips >= MIN_STAKE && chips <= MAX_STAKE)) continue;
+          if (st.side !== "yes" && st.side !== "no") continue;
+          if (TYPES[b.type].self && s.id === subjectId && st.side !== "yes") continue; // only back yourself
+          const at = Date.parse(st.at);
+          if (!isFinite(at) || at > cutoff) continue;                          // too late
+          stakes.push({ uid: s.id, side: st.side, chips, at });
+        }
+        stakes.sort((a, c) => a.at - c.at);
+        const yes = stakes.filter((s) => s.side === "yes").reduce((t, s) => t + s.chips, 0);
+        const no = stakes.filter((s) => s.side === "no").reduce((t, s) => t + s.chips, 0);
+        const bet = {
+          id: bid, createdBy: m.id, question: b.question.trim().slice(0, 140), type: b.type, subjectId, judgeId: b.judgeId,
+          doneMeans: String(b.doneMeans || "").slice(0, 200), closesAt, createdAt: Date.parse(b.createdAt) || 0,
+          verdict, stakes, yes, no, payouts: {}, result: null,
+        };
+        bet.status = verdict ? "settled" : now >= closesAt ? "awaiting" : "open";
+        if (verdict) {
+          bet.payouts = settle(bet);
+          for (const [uid, v] of Object.entries(bet.payouts)) add(delta, uid, v);
+        } else {
+          for (const s of stakes) add(inPlay, s.uid, s.chips);
+        }
+        bets.push(bet);
+      }
+    }
+
+    // Chores: the person who RECEIVED the chore logs it in their own ledger.
+    const chores = [];
+    for (const m of members) {
+      const r = isObj(people[m.id].received) ? people[m.id].received : {};
+      for (const [rid, x] of Object.entries(r)) {
+        if (!isObj(x) || !byId[x.from] || x.from === m.id) continue;
+        delta[m.id] -= CHORE; delta[x.from] += CHORE;
+        chores.push({ id: rid, to: m.id, from: x.from, at: Date.parse(x.at) || 0 });
+      }
+    }
+    chores.sort((a, b) => b.at - a.at);
+
+    const wallets = {};
+    for (const m of members) {
+      const balance = START + delta[m.id];
+      wallets[m.id] = { balance, inPlay: inPlay[m.id], available: balance - inPlay[m.id] };
+    }
+
+    const track = {};
+    for (const m of members) track[m.id] = { kept: 0, total: 0 };
+    for (const b of bets) {
+      if (!TYPES[b.type].self || !b.verdict || b.verdict.outcome === "void" || !track[b.subjectId]) continue;
+      track[b.subjectId].total++;
+      if (b.verdict.outcome === "yes") track[b.subjectId].kept++;
+    }
+
+    // Fewest chore handoffs: whole chores only.
+    const debtors = members.map((m) => ({ id: m.id, n: Math.floor(Math.max(0, START - wallets[m.id].balance) / CHORE) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+    const creditors = members.map((m) => ({ id: m.id, n: Math.floor(Math.max(0, wallets[m.id].balance - START) / CHORE) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+    const handoffs = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const n = Math.min(debtors[i].n, creditors[j].n);
+      handoffs.push({ from: debtors[i].id, to: creditors[j].id, n });
+      debtors[i].n -= n; creditors[j].n -= n;
+      if (!debtors[i].n) i++;
+      if (!creditors[j].n) j++;
+    }
+    return { members, byId, bets, wallets, track, chores, handoffs };
+  }
+
+  function settle(bet) {
+    const p = {};
+    const add = (k, v) => { p[k] = (p[k] || 0) + v; };
+    const o = bet.verdict.outcome;
+    if (o === "void") { bet.result = "void"; return p; }
+    const winners = bet.stakes.filter((s) => s.side === o), losers = bet.stakes.filter((s) => s.side !== o);
+    if (!winners.length || !losers.length) { bet.result = "refund"; return p; }
+    const pot = losers.reduce((t, s) => t + s.chips, 0);
+    const dist = pot - Math.floor(pot * FEE_RATE);
+    const wTotal = winners.reduce((t, s) => t + s.chips, 0);
+    let paid = 0;
+    for (const w of winners) { const g = Math.floor((dist * w.chips) / wTotal); add(w.uid, g); paid += g; }
+    for (const l of losers) add(l.uid, -l.chips);
+    if (pot - paid) add(bet.judgeId, pot - paid);
+    bet.result = "paid"; bet.judgeCut = pot - paid;
+    return p;
+  }
+
+  // ---------- stores ----------
+  function makeRealStore(db) {
+    let chain = Promise.resolve();
+    const queue = (fn) => { const p = chain.then(fn); chain = p.catch(() => {}); return p; };
+    return {
+      subscribe(next, fail) {
+        return db.collection("people").onSnapshot((snap) => {
+          const p = {};
+          for (const d of snap.docs) if (d.exists) p[d.id] = d.data();
+          next(p, snap.metadata);
+        }, fail);
+      },
+      join(id, profile) {
+        return queue(async () => {
+          const ref = db.doc("people/" + id);
+          const cur = await ref.get();
+          if (cur.exists) return ref.update(profile);
+          return ref.set({ ...profile, bets: {}, stakes: {}, verdicts: {}, received: {} });
+        });
+      },
+      write(id, patch) { return queue(() => db.doc("people/" + id).update(patch)); },
+    };
+  }
+
+  function deepMerge(a, b) {
+    const out = isObj(a) ? { ...a } : {};
+    for (const [k, v] of Object.entries(b)) out[k] = isObj(v) && isObj(out[k]) ? deepMerge(out[k], v) : isObj(v) ? deepMerge({}, v) : v;
+    return out;
+  }
+
+  function makeDemoStore() {
+    const H = 3600e3, D = 24 * H, now = Date.now(), t = (ms) => new Date(now + ms).toISOString();
+    const p = {
+      "d-mum":  { name: "Mum", emoji: "🦉", joinedAt: t(-30 * D), bets: {}, stakes: {}, verdicts: {}, received: {} },
+      "d-dad":  { name: "Dad", emoji: "🐻", joinedAt: t(-30 * D + 1), bets: {}, stakes: {}, verdicts: {}, received: {} },
+      "d-lily": { name: "Lily", emoji: "🦊", joinedAt: t(-30 * D + 2), bets: {}, stakes: {}, verdicts: {}, received: {} },
+      "d-sam":  { name: "Sam", emoji: "🐸", joinedAt: t(-30 * D + 3), bets: {}, stakes: {}, verdicts: {}, received: {} },
+      "d-gran": { name: "Grandma", emoji: "🐢", joinedAt: t(-30 * D + 4), bets: {}, stakes: {}, verdicts: {}, received: {} },
+    };
+    const bet = (by, id, b) => { p[by].bets[id] = { createdAt: t(-6 * D), subjectId: null, ...b }; };
+    const stake = (who, id, side, chips, at) => { p[who].stakes[id] = { side, chips, at: t(at) }; };
+    bet("d-dad", "x-gutters", { type: "promise", subjectId: "d-dad", judgeId: "d-mum", question: "Dad cleans the gutters by Saturday 6pm", doneMeans: "Both front gutters are clear and the downpipe drains", closesAt: t(-2 * D) });
+    stake("d-dad", "x-gutters", "yes", 20, -5 * D); stake("d-lily", "x-gutters", "no", 30, -5 * D + H); stake("d-sam", "x-gutters", "no", 20, -4 * D);
+    p["d-mum"].verdicts["x-gutters"] = { outcome: "no", at: t(-2 * D + H) };
+    bet("d-mum", "x-bins", { type: "promise", subjectId: "d-lily", judgeId: "d-dad", question: "Lily takes the bins out every night this week", doneMeans: "Bins are out by 9pm on all 7 nights", closesAt: t(-3 * D) });
+    stake("d-lily", "x-bins", "yes", 15, -6 * D); stake("d-sam", "x-bins", "no", 10, -6 * D + H); stake("d-gran", "x-bins", "no", 5, -6 * D + 2 * H);
+    p["d-dad"].verdicts["x-bins"] = { outcome: "yes", at: t(-3 * D + H) };
+    p["d-lily"].received["x-r1"] = { from: "d-dad", at: t(-D) };
+    bet("d-mum", "x-airport", { type: "plan", judgeId: "d-gran", question: "We leave for the airport by 9:00 on Saturday", doneMeans: "The car is out of the driveway by 9:00", closesAt: t(2 * D) });
+    stake("d-mum", "x-airport", "yes", 10, -D); stake("d-dad", "x-airport", "yes", 15, -D); stake("d-lily", "x-airport", "no", 10, -20 * H); stake("d-sam", "x-airport", "no", 5, -10 * H);
+    bet("d-lily", "x-study", { type: "goal", subjectId: "d-lily", judgeId: "d-mum", question: "Lily studies 5 hours for the chemistry exam this week", doneMeans: "Her study log shows 5 hours by Sunday 8pm", closesAt: t(3 * D) });
+    stake("d-lily", "x-study", "yes", 25, -2 * D); stake("d-dad", "x-study", "yes", 10, -D); stake("d-sam", "x-study", "no", 15, -5 * H);
+    bet("d-sam", "x-photo", { type: "fun", judgeId: "d-dad", question: "The family photo takes fewer than 5 tries", doneMeans: "Dad counts the shutter clicks", closesAt: t(-2 * H) });
+    stake("d-mum", "x-photo", "yes", 10, -D); stake("d-gran", "x-photo", "no", 15, -D); stake("d-sam", "x-photo", "no", 10, -5 * H);
+    bet("d-gran", "x-room", { type: "promise", subjectId: "d-sam", judgeId: "d-gran", question: "Sam tidies the bedroom before Grandma visits on Friday", doneMeans: "Floor is clear and the bed is made when Grandma arrives", closesAt: t(D + 5 * H) });
+    stake("d-sam", "x-room", "yes", 15, -10 * H); stake("d-mum", "x-room", "no", 10, -8 * H);
+
+    let listener = null;
+    const emit = () => listener && listener(JSON.parse(JSON.stringify(p)), { fromCache: false });
+    return {
+      subscribe(next) { listener = next; setTimeout(emit, 0); return () => { listener = null; }; },
+      async join(id, profile) { p[id] = deepMerge(p[id] || { bets: {}, stakes: {}, verdicts: {}, received: {} }, profile); emit(); },
+      async write(id, patch) { p[id] = deepMerge(p[id] || {}, patch); emit(); },
+    };
+  }
+
+  // ---------- formatting ----------
+  function span(ms) {
+    const m = Math.max(1, Math.round(Math.abs(ms) / 60000));
+    if (m < 60) return m + "m";
+    const hrs = Math.floor(m / 60);
+    if (hrs < 48) return hrs + "h" + (m % 60 && hrs < 6 ? " " + (m % 60) + "m" : "");
+    const d = Math.floor(hrs / 24);
+    return d + "d" + (hrs % 24 ? " " + (hrs % 24) + "h" : "");
+  }
+  const fmtDate = (ms) => new Date(ms).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "") + Math.abs(n);
+  const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+
+  function who(id, opts) {
+    const m = M && M.byId[id];
+    const name = m ? m.name : "Someone";
+    return h("span", { class: "who" }, m ? m.emoji + " " : "", name, id === me() && !(opts && opts.plain) ? h("span", { class: "you" }, "(you)") : null);
+  }
+  const me = () => (state.mode === "demo" ? state.demoAs : state.meId);
+  const isMember = () => !!(M && me() && M.byId[me()]);
+
+  // ---------- toast ----------
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3400);
+  }
+  function writeError(e) {
+    const code = e && e.code;
+    if (code === "invalid_argument" || code === "not_granted") toast("This view can't save. Ask the board's owner to share it with you as an Editor.");
+    else if (code === "quota_exceeded") toast("The board is full. Ask the owner to clear out old bets.");
+    else toast("Couldn't save. Check your connection and try again.");
+  }
+  async function save(patch, okMsg) {
+    if (state.busy) return false;
+    state.busy = true;
+    try { await store.write(me(), patch); if (okMsg) toast(okMsg); return true; }
+    catch (e) { writeError(e); return false; }
+    finally { state.busy = false; render(); }
+  }
+
+  // ---------- render ----------
+  function render() {
+    if (!store) return;
+    M = compute(state.people, Date.now());
+    renderWallet(); renderDemoBar(); renderTabs(); renderJoin();
+    if (state.tab === "bets") renderFeed();
+    if (state.tab === "family") renderFamily();
+    syncNewForm();
+  }
+
+  function renderWallet() {
+    const w = $("wallet");
+    w.replaceChildren();
+    if (!isMember()) { w.append(h("div", { class: "wallet-sub" }, state.mode === "loading" ? "" : "Not on the board yet")); return; }
+    const x = M.wallets[me()];
+    const chores = Math.trunc((x.balance - START) / CHORE);
+    w.append(
+      h("div", null,
+        h("div", { class: "wallet-num num" }, x.balance),
+        h("div", { class: "wallet-sub" }, x.inPlay ? x.inPlay + " in play · " : "", chores > 0 ? h("span", { class: "earn" }, "+" + plural(chores, "chore")) : chores < 0 ? h("span", { class: "owe" }, "owes " + plural(-chores, "chore")) : "even")
+      )
+    );
+  }
+
+  function renderDemoBar() {
+    const bar = $("demo-bar");
+    bar.hidden = state.mode !== "demo";
+    if (bar.hidden) return;
+    const sel = $("demo-as");
+    if (sel.options.length !== M.members.length || document.activeElement !== sel) {
+      sel.replaceChildren(...M.members.map((m) => h("option", { value: m.id }, m.emoji + " " + m.name)));
+      sel.value = state.demoAs;
+    }
+  }
+
+  function renderTabs() {
+    for (const b of document.querySelectorAll(".tab")) b.setAttribute("aria-selected", String(b.dataset.tab === state.tab));
+    $("view-bets").hidden = state.tab !== "bets";
+    $("view-new").hidden = state.tab !== "new";
+    $("view-family").hidden = state.tab !== "family";
+    const open = M.bets.filter((b) => b.status !== "settled").length;
+    const mine = M.bets.filter((b) => b.status !== "settled" && b.judgeId === me() && b.status === "awaiting").length;
+    const c = $("count-open");
+    c.textContent = mine ? mine + " to judge" : open;
+    c.className = "count" + (mine ? " hot" : "");
+  }
+
+  function renderJoin() {
+    const show = state.mode === "live" && !isMember();
+    $("join").hidden = !show;
+    if (!show) return;
+    const full = M.members.length >= MAX_MEMBERS;
+    $("join-btn").disabled = full || !state.meId;
+    $("join-sub").textContent = !state.meId
+      ? "Sign in to claude.ai to join. You can still look at the bets below."
+      : full ? "This board already has 10 people, which is the limit."
+      : M.members.length ? M.members.length + " of 10 already here: " + M.members.map((m) => m.emoji + " " + m.name).join(", ") + "."
+      : "You're the first one here. Pick the name your family knows you by. Up to 10 people can join.";
+  }
+
+  // ----- feed -----
+  function renderFilters() {
+    const f = $("filters");
+    const counts = { all: M.bets.length };
+    for (const k of Object.keys(TYPES)) counts[k] = M.bets.filter((b) => b.type === k).length;
+    f.replaceChildren(...["all", ...Object.keys(TYPES)].map((k) =>
+      h("button", { class: "filter", type: "button", "aria-pressed": String(state.filter === k), onclick: () => { state.filter = k; render(); } },
+        k === "all" ? "All" : TYPES[k].label, " ", h("span", { class: "num" }, counts[k]))));
+  }
+
+  function renderFeed() {
+    renderFilters();
+    const feed = $("feed");
+    const list = M.bets.filter((b) => state.filter === "all" || b.type === state.filter);
+    if (!M.bets.length) {
+      feed.replaceChildren(h("div", { class: "card empty" },
+        h("h3", null, "No bets yet"),
+        h("p", { class: "note" }, "Start with a promise someone made at dinner. \"I'll fix the gate this weekend\" is a perfect first bet."),
+        isMember() ? h("button", { class: "btn primary", type: "button", onclick: () => go("new") }, "Post the first bet") : null));
+      return;
+    }
+    const now = Date.now();
+    const groups = [
+      ["Needs your verdict", list.filter((b) => b.status === "awaiting" && b.judgeId === me()).sort((a, b) => a.closesAt - b.closesAt)],
+      ["Open for bets", list.filter((b) => b.status === "open").sort((a, b) => a.closesAt - b.closesAt)],
+      ["Waiting for a verdict", list.filter((b) => b.status === "awaiting" && b.judgeId !== me()).sort((a, b) => a.closesAt - b.closesAt)],
+      ["Settled", list.filter((b) => b.status === "settled").sort((a, b) => b.verdict.at - a.verdict.at)],
+    ];
+    const out = [];
+    for (const [title, items] of groups) {
+      if (!items.length) continue;
+      out.push(h("section", { class: "stack" }, h("h2", { class: "section-title" }, title, h("span", { class: "count" }, items.length)), h("div", { class: "bets" }, items.map((b) => betCard(b, now)))));
+    }
+    if (!out.length) out.push(h("p", { class: "note" }, "No " + TYPES[state.filter].label.toLowerCase() + " bets yet."));
+    feed.replaceChildren(...out);
+  }
+
+  function confidence(b) {
+    const total = b.yes + b.no;
+    const pct = total ? Math.round((b.yes / total) * 100) : null;
+    return h("div", { class: "conf" },
+      h("div", { class: "conf-bar", role: "img", "aria-label": total ? pct + "% of chips on YES" : "No stakes yet" },
+        total ? [h("span", { class: "y", style: "width:" + (b.yes / total) * 100 + "%" }), h("span", { class: "n", style: "width:" + (b.no / total) * 100 + "%" })] : null),
+      h("div", { class: "conf-label" },
+        total ? h("span", null, b.status === "settled" ? "Family gave it " : "Family confidence ", h("strong", { class: "num" }, pct + "%")) : h("span", { class: "note" }, "No stakes yet"),
+        total ? h("span", { class: "num" }, h("span", { class: "c-yes" }, b.yes + " YES"), " · ", h("span", { class: "c-no" }, b.no + " NO")) : null));
+  }
+
+  function betCard(b, now) {
+    const open = state.open === b.id;
+    const judgeMe = b.judgeId === me() && b.status !== "settled";
+    const when = b.status === "open" ? "Closes in " + span(b.closesAt - now)
+      : b.status === "awaiting" ? "Closed " + span(now - b.closesAt) + " ago"
+      : "Settled " + fmtDate(b.verdict.at);
+    const head = h("button", { class: "bet-head", type: "button", "aria-expanded": String(open), onclick: () => { state.open = open ? null : b.id; state.confirm = null; render(); } },
+      h("div", { class: "bet-meta" }, h("span", { class: "tag " + b.type }, TYPES[b.type].label), h("span", null, when),
+        judgeMe && b.status === "awaiting" ? h("span", { class: "pill-alert" }, "Your verdict") : null),
+      h("h3", { class: "q" }, b.question),
+      h("div", { class: "people-line" },
+        b.subjectId ? h("span", null, "About ", who(b.subjectId)) : null,
+        h("span", null, "Judge ", who(b.judgeId))),
+      confidence(b),
+      b.status === "settled" ? resultLine(b) : null);
+    return h("article", { class: "bet" + (judgeMe && b.status === "awaiting" ? " mine-to-judge" : "") }, head, open ? betBody(b) : null);
+  }
+
+  function resultLine(b) {
+    const o = b.verdict.outcome;
+    if (b.result === "void") return h("div", { class: "result" }, h("span", { class: "verdict" }, "Void"), h("span", null, "The judge called it off. Everyone got their chips back."));
+    if (b.result === "refund") return h("div", { class: "result" }, h("span", { class: "verdict " + (o === "yes" ? "c-yes" : "c-no") }, o.toUpperCase()), h("span", null, "Nobody was on the losing side, so all chips went back."));
+    const rows = Object.entries(b.payouts).filter(([, v]) => v).sort((x, y) => y[1] - x[1]);
+    return h("div", { class: "result" }, h("span", { class: "verdict " + (o === "yes" ? "c-yes" : "c-no") }, o.toUpperCase()),
+      rows.map(([uid, v]) => h("span", { class: "num" }, h("b", { class: v > 0 ? "earn" : "owe" }, signed(v)), " ", who(uid, { plain: true }), uid === b.judgeId ? " (judge)" : "")));
+  }
+
+  function betBody(b) {
+    const kids = [];
+    if (b.doneMeans) kids.push(h("p", { class: "done-means" }, h("b", null, "Counts as YES: "), b.doneMeans));
+    kids.push(h("p", { class: "note" }, "Posted by ", who(b.createdBy, { plain: true }), " · betting closes ", fmtDate(b.closesAt)));
+    if (b.stakes.length) {
+      kids.push(h("ul", { class: "stakes", "aria-label": "Stakes" }, b.stakes.map((s) =>
+        h("li", null, h("span", { class: "row", style: "gap:8px" }, h("span", { class: "side-pill " + s.side }, s.side.toUpperCase()), who(s.uid)),
+          h("span", { class: "num row", style: "gap:5px" }, chipIcon(), s.chips, b.status === "settled" && b.payouts[s.uid] ? h("span", { class: b.payouts[s.uid] > 0 ? "earn" : "owe" }, " → " + signed(b.payouts[s.uid])) : null)))));
+    }
+    const p = actionPanel(b);
+    if (p) kids.push(p);
+    return h("div", { class: "bet-body" }, kids);
+  }
+
+  function actionPanel(b) {
+    const uid = me();
+    if (!isMember() || b.status === "settled") return null;
+    if (b.judgeId === uid) return judgePanel(b);
+    if (b.status === "awaiting") return h("div", { class: "panel" }, h("p", { class: "note" }, "Betting has closed. Waiting for ", who(b.judgeId, { plain: true }), " to settle it."));
+    const mine = b.stakes.find((s) => s.uid === uid);
+    if (mine) return h("div", { class: "panel" }, h("p", { class: "note", style: "margin:0" }, "You put ", h("b", null, mine.chips + " chips on " + mine.side.toUpperCase()), ". Stakes are locked."));
+    return stakePanel(b);
+  }
+
+  function stakePanel(b) {
+    const uid = me(), wallet = M.wallets[uid];
+    const selfOnly = TYPES[b.type].self && b.subjectId === uid;
+    const maxChips = Math.min(MAX_STAKE, wallet.available);
+    if (maxChips < MIN_STAKE) return h("div", { class: "panel" }, h("p", { class: "note", style: "margin:0" }, "You need at least " + MIN_STAKE + " available chips to bet. Win some back, or wait for open bets to settle."));
+    const d = state.drafts[b.id] || (state.drafts[b.id] = { side: selfOnly ? "yes" : null, chips: Math.min(10, maxChips) });
+    d.chips = Math.max(MIN_STAKE, Math.min(d.chips, maxChips));
+    const setChips = (n) => { d.chips = Math.max(MIN_STAKE, Math.min(maxChips, n)); render(); };
+    let preview = "Pick a side.";
+    if (d.side) {
+      const other = d.side === "yes" ? b.no : b.yes, same = d.side === "yes" ? b.yes : b.no;
+      if (!other) preview = "Nobody is on the other side yet. If it stays that way, you get your chips back.";
+      else {
+        const gain = Math.floor(((other - Math.floor(other * FEE_RATE)) * d.chips) / (same + d.chips));
+        preview = "If " + d.side.toUpperCase() + " wins you get about +" + gain + " at today's stakes. If it loses, −" + d.chips + ".";
+      }
+    }
+    return h("div", { class: "panel" },
+      h("h4", null, "Take a side"),
+      h("div", { class: "row" },
+        h("button", { class: "btn yes", type: "button", "aria-pressed": String(d.side === "yes"), onclick: () => { d.side = "yes"; render(); } }, "YES, it happens"),
+        h("button", { class: "btn no", type: "button", "aria-pressed": String(d.side === "no"), disabled: selfOnly, title: selfOnly ? "You can't bet against yourself" : null, onclick: () => { d.side = "no"; render(); } }, "NO, it won't")),
+      selfOnly ? h("p", { class: "note" }, "This one is about you, so you can only back yourself.") : null,
+      h("div", { class: "row" },
+        h("div", { class: "stepper" },
+          h("button", { type: "button", "aria-label": "5 fewer chips", disabled: d.chips <= MIN_STAKE, onclick: () => setChips(d.chips - 5) }, "−"),
+          h("output", { class: "num", "aria-live": "polite" }, chipIcon(), d.chips),
+          h("button", { type: "button", "aria-label": "5 more chips", disabled: d.chips >= maxChips, onclick: () => setChips(d.chips + 5) }, "+")),
+        h("span", { class: "note" }, wallet.available + " available · " + MIN_STAKE + "–" + MAX_STAKE + " per bet")),
+      h("p", { class: "preview", style: "margin:0" }, preview),
+      h("div", { class: "row" },
+        h("button", { class: "btn primary", type: "button", disabled: !d.side || state.busy, onclick: () => placeStake(b, d) }, d.side ? "Stake " + d.chips + " on " + d.side.toUpperCase() : "Stake chips")));
+  }
+
+  function judgePanel(b) {
+    const c = state.confirm && state.confirm.betId === b.id ? state.confirm.outcome : null;
+    const label = { yes: "YES, it happened", no: "NO, it didn't", void: "Void, everyone gets chips back" };
+    if (c) {
+      return h("div", { class: "panel" },
+        h("h4", null, "Settle as " + (c === "void" ? "void" : c.toUpperCase()) + "?"),
+        h("p", { class: "note", style: "margin:0" }, c === "void" ? "Every stake is refunded. This can't be changed later." : "Chips are paid out right away. This can't be changed later."),
+        h("div", { class: "row" },
+          h("button", { class: "btn " + (c === "yes" ? "yes" : c === "no" ? "no" : ""), "aria-pressed": "true", type: "button", disabled: state.busy, onclick: () => giveVerdict(b, c) }, "Confirm " + (c === "void" ? "void" : c.toUpperCase())),
+          h("button", { class: "btn", type: "button", onclick: () => { state.confirm = null; render(); } }, "Cancel")));
+    }
+    return h("div", { class: "panel" },
+      h("h4", null, "You're the judge"),
+      h("p", { class: "note", style: "margin:0" }, b.status === "open" ? "You can't bet on this one. Settle it once you know the answer; betting stops when you do." : "Betting has closed. Check what counts as YES, then settle it."),
+      h("div", { class: "row" },
+        ["yes", "no", "void"].map((o) => h("button", { class: "btn " + (o === "void" ? "small" : o), type: "button", onclick: () => { state.confirm = { betId: b.id, outcome: o }; render(); } }, label[o]))));
+  }
+
+  async function placeStake(b, d) {
+    const fresh = M.bets.find((x) => x.id === b.id);
+    if (!fresh || fresh.status !== "open") return toast("Betting on this one just closed.");
+    const ok = await save({ stakes: { [b.id]: { side: d.side, chips: d.chips, at: new Date().toISOString() } } }, "Locked in: " + d.chips + " chips on " + d.side.toUpperCase() + ".");
+    if (ok) delete state.drafts[b.id];
+  }
+  async function giveVerdict(b, outcome) {
+    const ok = await save({ verdicts: { [b.id]: { outcome, at: new Date().toISOString() } } }, outcome === "void" ? "Bet voided. Chips refunded." : "Settled " + outcome.toUpperCase() + ". Chips paid out.");
+    if (ok) state.confirm = null;
+    render();
+  }
+
+  // ----- family -----
+  function renderFamily() {
+    const root = $("family");
+    if (!M.members.length) { root.replaceChildren(h("div", { class: "card empty" }, h("h3", null, "Nobody's here yet"), h("p", { class: "note" }, "Join the board from the Bets tab, then share the link with your family."))); return; }
+    const rows = [...M.members].sort((a, b) => M.wallets[b.id].balance - M.wallets[a.id].balance);
+    const board = h("section", { class: "card stack", "aria-labelledby": "board-title" },
+      h("h3", { class: "section-title", id: "board-title" }, "Chip board ", h("span", { class: "count" }, M.members.length + " / " + MAX_MEMBERS)),
+      h("ol", { class: "board" }, rows.map((m, i) => {
+        const w = M.wallets[m.id], t = M.track[m.id];
+        const ch = Math.trunc((w.balance - START) / CHORE);
+        return h("li", null,
+          h("span", { class: "rank num" }, i + 1),
+          h("span", { class: "name" }, who(m.id)),
+          h("span", { class: "bal" }, h("b", { class: "num" }, chipIcon(), w.balance),
+            h("span", { class: ch > 0 ? "earn" : ch < 0 ? "owe" : "" }, ch > 0 ? "earned " + plural(ch, "chore") : ch < 0 ? "owes " + plural(-ch, "chore") : "even")),
+          h("span", { class: "sub" }, t.total ? "Kept " + t.kept + " of " + t.total + " promises & goals" : "No promises judged yet", w.inPlay ? " · " + w.inPlay + " chips in play" : ""));
+      })));
+
+    const uid = me();
+    const settleCard = h("section", { class: "card stack", "aria-labelledby": "settle-title" },
+      h("h3", { class: "section-title", id: "settle-title" }, "Chores owed"),
+      h("p", { class: "note" }, "1 chore = 10 chips, about 15 minutes of a job the family agrees on (dishes, bins, vacuuming). When someone does a chore they owe you, tick it off here."),
+      M.handoffs.length
+        ? h("ul", { class: "handoffs" }, M.handoffs.map((x) => h("li", null,
+            h("span", null, who(x.from), " owes ", who(x.to), " ", h("b", null, plural(x.n, "chore"))),
+            x.to === uid && isMember() ? h("button", { class: "btn small primary", type: "button", disabled: state.busy, onclick: () => choreDone(x.from) }, (M.byId[x.from] ? M.byId[x.from].name : "They") + " did one") : null)))
+        : h("p", { class: "note" }, "Nobody owes a full chore right now."),
+      M.chores.length ? h("div", { class: "stack", style: "gap:6px" }, h("h4", { class: "section-title" }, "Done lately"),
+        h("ul", { class: "log" }, M.chores.slice(0, 6).map((c) => h("li", null, who(c.from, { plain: true }), " did a chore for ", who(c.to, { plain: true }), " · ", fmtDate(c.at))))) : null);
+    root.replaceChildren(h("div", { class: "stack", style: "gap:22px" }, board, settleCard));
+  }
+
+  async function choreDone(fromId) {
+    const rid = "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await save({ received: { [rid]: { from: fromId, at: new Date().toISOString() } } }, "Logged. 10 chips went back to " + (M.byId[fromId] ? M.byId[fromId].name : "them") + ".");
+  }
+
+  // ----- new bet form -----
+  const nbType = () => (document.querySelector('input[name="nb-type"]:checked') || {}).value || "promise";
+  function syncNewForm() {
+    if (!M) return;
+    const type = nbType(), T = TYPES[type];
+    $("type-hint").textContent = T.hint;
+    $("nb-q").placeholder = T.q;
+    $("nb-done").placeholder = T.done;
+    const subj = $("nb-subject"), judge = $("nb-judge");
+    const sv = subj.value, jv = judge.value;
+    const opts = (exclude) => M.members.filter((m) => m.id !== exclude).map((m) => h("option", { value: m.id }, m.emoji + " " + m.name + (m.id === me() ? " (you)" : "")));
+    if (document.activeElement !== subj) {
+      subj.replaceChildren(T.self ? h("option", { value: "" }, "Choose a person") : h("option", { value: "" }, "Nobody in particular"), ...opts(null));
+      subj.value = M.byId[sv] ? sv : "";
+    }
+    if (document.activeElement !== judge) {
+      judge.replaceChildren(h("option", { value: "" }, "Choose a judge"), ...opts(subj.value || null));
+      let pick = jv && jv !== subj.value && M.byId[jv] ? jv : "";
+      if (!pick) { const cand = M.members.find((m) => m.id !== me() && m.id !== subj.value) || M.members.find((m) => m.id !== subj.value); pick = cand ? cand.id : ""; }
+      judge.value = pick;
+    }
+  }
+  function defaultClose() {
+    const d = new Date();
+    d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+    d.setHours(18, 0, 0, 0);
+    const pad = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T18:00";
+  }
+  async function submitNewBet(ev) {
+    ev.preventDefault();
+    const err = $("nb-err");
+    const fail = (m) => { err.textContent = m; err.hidden = false; };
+    err.hidden = true;
+    if (!isMember()) return fail("Join the board first (Bets tab).");
+    const type = nbType(), T = TYPES[type];
+    const question = $("nb-q").value.trim(), doneMeans = $("nb-done").value.trim();
+    const subjectId = $("nb-subject").value || null, judgeId = $("nb-judge").value;
+    const closesAt = new Date($("nb-close").value).getTime();
+    if (question.length < 6) return fail("Write the prediction as a full sentence, like \"" + T.q + "\".");
+    if (T.self && !subjectId) return fail("A " + T.label.toLowerCase() + " needs a person it's about.");
+    if (!judgeId) return fail(M.members.length < 2 ? "You need at least one more family member on the board to act as judge." : "Pick a judge.");
+    if (judgeId === subjectId) return fail("The judge can't be the person the bet is about.");
+    if (T.self && doneMeans.length < 4) return fail("Say what counts as YES so the judge can check it.");
+    if (!isFinite(closesAt) || closesAt < Date.now() + 5 * 60e3) return fail("Pick a closing time at least 5 minutes from now.");
+    if (closesAt > Date.now() + 60 * 864e5) return fail("Keep bets under 60 days so chips don't sit locked for ages.");
+    const id = "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const ok = await save({ bets: { [id]: { question, type, subjectId, judgeId, doneMeans, closesAt: new Date(closesAt).toISOString(), createdAt: new Date().toISOString() } } },
+      judgeId === me() ? "Bet posted. You're judging this one." : "Bet posted. Take a side before it closes.");
+    if (ok) {
+      $("nb-q").value = ""; $("nb-done").value = ""; $("nb-close").value = defaultClose();
+      state.open = id; go("bets");
+    }
+  }
+
+  // ----- navigation -----
+  function go(tab) {
+    state.tab = tab;
+    try { history.replaceState(null, "", "#" + tab); } catch (_) { location.hash = tab; }
+    render();
+    window.scrollTo({ top: 0 });
+  }
+
+  // ---------- boot ----------
+  function buildStatic() {
+    $("emoji-pick").replaceChildren(...EMOJIS.flatMap((e, i) => [
+      h("input", { type: "radio", name: "join-emoji", id: "emo-" + i, value: e, checked: i === 0 }),
+      h("label", { for: "emo-" + i, "aria-label": e }, e)]));
+    $("nb-close").value = defaultClose();
+    for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => go(b.dataset.tab));
+    for (const r of document.querySelectorAll('input[name="nb-type"]')) r.addEventListener("change", () => syncNewForm());
+    $("nb-subject").addEventListener("change", () => { $("nb-judge").blur(); syncNewForm(); });
+    $("new-form").addEventListener("submit", submitNewBet);
+    $("demo-as").addEventListener("change", (e) => { state.demoAs = e.target.value; state.drafts = {}; state.confirm = null; render(); });
+    $("join-form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const name = $("join-name").value.trim();
+      const emoji = (document.querySelector('input[name="join-emoji"]:checked') || {}).value || EMOJIS[0];
+      const err = $("join-err"); err.hidden = true;
+      if (name.length < 2) { err.textContent = "Type a name of at least 2 letters."; err.hidden = false; return; }
+      if (M && M.members.some((m) => m.name.toLowerCase() === name.toLowerCase())) { err.textContent = "Someone is already called " + name + ". Try another name."; err.hidden = false; return; }
+      $("join-btn").disabled = true;
+      try { await store.join(state.meId, { name, emoji, joinedAt: new Date().toISOString() }); toast("Welcome, " + name + ". You have 100 chips."); }
+      catch (e) { writeError(e); }
+      finally { $("join-btn").disabled = false; }
+    });
+    const hash = location.hash.replace("#", "");
+    if (["bets", "new", "family"].includes(hash)) state.tab = hash;
+  }
+
+  function startDemo(reason) {
+    state.mode = "demo";
+    store = makeDemoStore();
+    $("status").hidden = false;
+    $("status").textContent = reason;
+    store.subscribe((p) => { state.people = p; render(); });
+  }
+
+  async function boot() {
+    buildStatic();
+    if (!window.claude || typeof window.claude.use !== "function") {
+      startDemo("This is a preview with a made-up family. Open the shared Chorecast link while signed in to claude.ai to play for real.");
+      return;
+    }
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db) {
+      startDemo("You're looking at a demo with a made-up family. Sign in to claude.ai and open the link your family shared to see the real board.");
+      return;
+    }
+    state.mode = "live";
+    state.meId = user ? await user.id() : null;
+    store = makeRealStore(db);
+    const status = $("status");
+    let loaded = false;
+    const timer = setTimeout(() => { if (!loaded) status.textContent = "Can't reach the family ledger yet. It will appear here as soon as the connection is back."; }, 10000);
+    store.subscribe((p, meta) => {
+      state.people = p;
+      if (!meta.fromCache) { loaded = true; clearTimeout(timer); status.hidden = true; }
+      render();
+    }, (e) => {
+      clearTimeout(timer);
+      status.hidden = false;
+      status.textContent = e && e.code === "revoked" ? "This board is no longer available to you." : "Lost the connection to the family ledger. Reload the page to try again.";
+    });
+  }
+
+  setInterval(() => { if (store && document.visibilityState === "visible") render(); }, 30000);
+  boot();
+})();
+</script>
